@@ -1,6 +1,6 @@
 package ru.drownshark.cardbluff
 
-enum class Value (number : Int) {
+enum class Value (val number : Int) {
     TWO(2),
     THREE(3),
     FOUR(4),
@@ -11,7 +11,7 @@ enum class Value (number : Int) {
     NINE(9),
     TEN(10),
     JACK(11),
-    QUEEN(13),
-    KING(14),
-    ACE(15)
+    QUEEN(12),
+    KING(13),
+    ACE(14)
 }
