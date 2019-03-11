@@ -3,6 +3,7 @@ package ru.drownshark.cardbluff
 enum class Combination() {
     ROYAL_FLUSH {
         override fun satisfy(set: MutableSet<Card>): Int? {
+            if (set.size < 5) return null
             val containsFiveHigh : (Set<Card>, Suit) -> Boolean = {mySet, mySuit -> mySet.any{it.equals(Card(Value.ACE, mySuit))} && mySet.any{it.equals(Card(Value.KING, mySuit))} && mySet.any{it.equals(Card(Value.QUEEN, mySuit))} && mySet.any{it.equals(Card(Value.JACK, mySuit))} && mySet.any{it.equals(Card(Value.TEN, mySuit))} }
             for (suit in Suit.values()) {
                 if (containsFiveHigh(set, suit)) return suit.ordinal
@@ -12,6 +13,7 @@ enum class Combination() {
     },
     STRAIGHT_FLUSH {
         override fun satisfy(set: MutableSet<Card>): Int? {
+            if (set.size < 5) return null
             val suitFilter: (Set<Card>, Suit) -> List<Card> = { mySet, mySuit -> mySet.filter { it.suit == mySuit } }
             var head: Value? = null
             for (suit in Suit.values()) {
@@ -29,22 +31,23 @@ enum class Combination() {
     },
     FOUR {
         override fun satisfy(set: MutableSet<Card>): Int? {
+            if (set.size < 4) return null
             val numbersByValue = set.groupingBy { it.face }.eachCount().toList().sortedWith(compareByDescending <Pair<Value,Int>>{it.second}.thenByDescending{it.first})
             return if (numbersByValue.first().second == 4) numbersByValue.first().first.number else null
         }
     },
     FULL_HOUSE {
         override fun satisfy(set: MutableSet<Card>): Pair<Int, Int>? {
+            if (set.size < 5) return null
             val numbersByValue = set.groupingBy { it.face }.eachCount().toList().sortedWith(compareByDescending <Pair<Value,Int>>{it.second}.thenByDescending{it.first})
-            return if ((numbersByValue.first().second == 3) && (numbersByValue[1].second >= 2)) Pair(numbersByValue.first().first.number, numbersByValue[1].first.number) else null
+            return if ((numbersByValue.size > 1) && (numbersByValue.first().second == 3) && (numbersByValue[1].second >= 2))Pair(numbersByValue.first().first.number, numbersByValue[1].first.number) else null
         }
     },
     FLUSH {
         override fun satisfy(set: MutableSet<Card>): Int? {
             if (set.size < 5) return null
-            val numbersBySuit = set.groupingBy { it.suit }.eachCount().toSortedMap()
-            val values = numbersBySuit.keys.asIterable()
-            return if (numbersBySuit.getValue(values.first()) >= 5) values.first().ordinal else null
+            val numbersBySuit = set.groupingBy { it.suit }.eachCount().toList().sortedByDescending { it.second }
+            return if (numbersBySuit.first().second >= 5) numbersBySuit.first().first.ordinal else null
         }
     },
     STRAIGHT {
@@ -72,7 +75,7 @@ enum class Combination() {
     TWO_PAIRS {
         override fun satisfy(set: MutableSet<Card>): Pair<Int, Int>? {
             val numbersByValue = set.groupingBy { it.face }.eachCount().toList().sortedWith(compareByDescending <Pair<Value,Int>>{it.second}.thenByDescending{it.first})
-            return if ((numbersByValue.first().second == 2) && (numbersByValue[1].second == 2)) Pair(numbersByValue.first().first.number, numbersByValue[1].first.number) else null
+            return if ((numbersByValue.size > 1) &&(numbersByValue.first().second == 2) && (numbersByValue[1].second == 2)) Pair(numbersByValue.first().first.number, numbersByValue[1].first.number) else null
         }
     },
     PAIR {
