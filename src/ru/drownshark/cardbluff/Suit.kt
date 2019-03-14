@@ -1,12 +1,12 @@
 package ru.drownshark.cardbluff
 
 enum class Suit {
-    CLUBS {
+    HEARTS {
         override fun toString(): String {
-            return "♣"
+            return "♥"
         }
     },
-    DIAMOND {
+    DIAMONDS {
         override fun toString(): String {
             return "♦"
         }
@@ -16,9 +16,9 @@ enum class Suit {
             return "♠"
         }
     },
-    HEARTS {
+    CLUBS {
         override fun toString(): String {
-            return "♥"
+            return "♣"
         }
     }
 }
