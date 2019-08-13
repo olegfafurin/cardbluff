@@ -1,5 +1,9 @@
 package ru.drownshark.cardbluff
 
+import java.lang.IllegalArgumentException
+import kotlin.math.max
+import kotlin.math.min
+
 enum class Combination {
     ROYAL_FLUSH {
         override fun satisfy(set: MutableSet<Card>): Suit? {
@@ -87,13 +91,13 @@ enum class Combination {
     THREE {
         override fun satisfy(set: MutableSet<Card>): Int? {
             val quantity = numbersByValue(set)
-            return if (quantity.first().second == 3) quantity.first().first.number else null
+            return if (quantity.first().second >= 3) quantity.first().first.number else null
         }
     },
     TWO_PAIRS {
         override fun satisfy(set: MutableSet<Card>): Pair<Int, Int>? {
             val quantity = numbersByValue(set)
-            return if ((quantity.size > 1) && (quantity.first().second == 2) && (quantity[1].second == 2)) Pair(
+            return if ((quantity.size > 1) && (quantity.first().second >= 2) && (quantity[1].second >= 2)) Pair(
                 quantity.first().first.number,
                 quantity[1].first.number
             ) else null
@@ -102,7 +106,7 @@ enum class Combination {
     PAIR {
         override fun satisfy(set: MutableSet<Card>): Int? {
             val quantity = numbersByValue(set)
-            return if (quantity.first().second == 2) quantity.first().first.number else null
+            return if (quantity.first().second >= 2) quantity.first().first.number else null
         }
     },
     HIGH_CARD {
@@ -113,22 +117,16 @@ enum class Combination {
 
     abstract fun satisfy(set: MutableSet<Card>): Any?
 
+    fun MutableSet<Card>.maxCombination(): Pair<Combination, Any>? {
+        for (combination in Combination.values()) {
+            val result = combination.satisfy(this)
+            if (result != null) return Pair(combination, result)
+        }
+        return null
+    }
+
     protected val containsFiveHigh: (Set<Card>, Suit) -> Boolean = { mySet, mySuit ->
-        mySet.any { it.equals(Card(Value.ACE, mySuit)) } && mySet.any {
-            it.equals(
-                Card(
-                    Value.KING,
-                    mySuit
-                )
-            )
-        } && mySet.any { it.equals(Card(Value.QUEEN, mySuit)) } && mySet.any {
-            it.equals(
-                Card(
-                    Value.JACK,
-                    mySuit
-                )
-            )
-        } && mySet.any { it.equals(Card(Value.TEN, mySuit)) }
+        mySet.any { it == Card(Value.ACE, mySuit) } && mySet.any { it == Card(Value.KING, mySuit) } && mySet.any { it == Card(Value.QUEEN, mySuit) } && mySet.any { it == Card(Value.JACK, mySuit) } && mySet.any { it.equals(Card(Value.TEN, mySuit)) }
     }
     protected val suitFilter: (Set<Card>, Suit) -> List<Card> = { mySet, mySuit -> mySet.filter { it.suit == mySuit } }
     protected val numbersByValue: (MutableSet<Card>) -> List<Pair<Value, Int>> = { set ->
@@ -199,24 +197,43 @@ enum class Combination {
 
     companion object {
         fun from(s: String): Pair<Combination, Any> {
-            val args = s.split(" ")
+            val args = s.replace("\\s+".toRegex(), " ").split(" ")
             val c = Combination.valueOf(args[0])
             val a: Any
             a = when (c) {
                 ROYAL_FLUSH -> {
-                    Suit.valueOf(args[1])
+                    if (args.size != 2) throw IllegalArgumentException()
+                    else Suit.valueOf(args[1])
                 }
                 STRAIGHT_FLUSH, FLUSH -> {
-                    Pair(Suit.valueOf(args[1]), Value.valueOf(args[2]).number)
+                    if (args.size != 3) throw IllegalArgumentException()
+                    else {
+                        try {
+                            val canonicalOrder = Pair(Suit.valueOf(args[1]), Value.valueOf(args[2]).number)
+                            canonicalOrder
+                        } catch (e: IllegalArgumentException) {
+                            Pair(Suit.valueOf(args[2]), Value.valueOf(args[1]).number)
+                        }
+                    }
                 }
                 FOUR, THREE, PAIR, STRAIGHT, HIGH_CARD -> {
-                    Value.valueOf(args[1]).number
+                    if (args.size != 2) throw IllegalArgumentException()
+                    else Value.valueOf(args[1]).number
                 }
-                FULL_HOUSE, TWO_PAIRS -> {
-                    Pair(Value.valueOf(args[1]).number, Value.valueOf(args[2]).number)
+                FULL_HOUSE -> {
+                    if (args.size != 3) throw IllegalArgumentException()
+                    else Pair(Value.valueOf(args[1]).number, Value.valueOf(args[2]).number)
+                }
+                TWO_PAIRS -> {
+                    if (args.size != 3) throw IllegalArgumentException()
+                    else Pair(
+                        max(Value.valueOf(args[1]).number, Value.valueOf(args[2]).number),
+                        min(Value.valueOf(args[1]).number, Value.valueOf(args[2]).number)
+                    )
                 }
             }
-            return Pair(c,a)
+            if ((a is Pair<*, *> && a.first == a.second) || (c == STRAIGHT && (a as Int) < 5) || (c == FLUSH && ((a as Pair<*, *>).second as Int) < 7) || (c == STRAIGHT_FLUSH && ((a as Pair<*, *>).second as Int) < 5)) throw IllegalArgumentException()
+            return Pair(c, a)
         }
     }
 }

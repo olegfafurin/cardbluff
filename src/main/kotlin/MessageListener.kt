@@ -6,6 +6,10 @@ abstract class MessageListener {
 
     internal abstract fun onDisconnect(id: Int? = null)
 
+    internal open fun onGameEnded() {
+
+    }
+
     internal open fun onException(e: Exception) {
         e.printStackTrace()
     }

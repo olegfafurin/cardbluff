@@ -3,14 +3,15 @@ package ru.drownshark.cardbluff
 import java.io.*
 import java.net.SocketException
 import java.util.ArrayList
-import kotlin.concurrent.thread
 
-class StreamWorker(var input: InputStream, var output: OutputStream) : Runnable, Closeable {
+class StreamWorker(var input: InputStream, var output: OutputStream, var id: Int = -1) : Runnable, Closeable {
 
     private val listeners = ArrayList<MessageListener>()
 
     private val outputLock = Any()
     private val listenerLock = Any()
+
+    private var stoppedEspecially = false
 
     fun addListener(listener: MessageListener) {
         listeners.add(listener)
@@ -29,10 +30,10 @@ class StreamWorker(var input: InputStream, var output: OutputStream) : Runnable,
                 }
             }
         } catch (e: SocketException) {
-            if (e.message == "Connection reset") {
+            if (e.message == "Connection reset" || e.message == "Socket closed") {
                 synchronized(listenerLock) {
                     for (listener in listeners) {
-                        listener.onDisconnect()
+                        listener.onGameEnded()
                     }
                 }
             } else {
@@ -42,14 +43,28 @@ class StreamWorker(var input: InputStream, var output: OutputStream) : Runnable,
                     }
                 }
             }
+        } catch (e: EOFException) {
+            if (!stoppedEspecially) {
+                synchronized(listenerLock) {
+                    for (listener in listeners) {
+                        listener.onDisconnect(id)
+                    }
+                }
+            }
         } catch (e: IOException) {
             synchronized(listenerLock) {
                 for (listener in listeners) {
                     listener.onException(e)
                 }
             }
+        } catch (e: InterruptedException) {
+            synchronized(listenerLock) {
+                for (listener in listeners) {
+                    listener.onDisconnect(id)
+                }
+            }
         }
-//        close()
+        close()
     }
 
     fun start() {
@@ -65,7 +80,8 @@ class StreamWorker(var input: InputStream, var output: OutputStream) : Runnable,
 
     @Throws(IOException::class)
     override fun close() {
-        input.close()
+        stoppedEspecially = true
         output.close()
+        input.close()
     }
 }

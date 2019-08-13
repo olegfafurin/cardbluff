@@ -1,0 +1,6 @@
+  CCCC       A  RRRR   DDD    BBBB  L     U    U FFFFFF FFFFFF
+ CC   C     AA  R   R  D  D   B   B L     U    U F      F     
+ C         A A  R  R   D   D  BBBB  L     U    U F      F     
+ C        A  A  RRR    D   D  B   B L     U    U FFFFFF FFFFFF
+ CC   C  AAAAA  R  R   D  D   B   B L     U    U F      F     
+  CCCC  AA   A  R   R  DDD    BBBB  LLLLL  UUUU  F      F     

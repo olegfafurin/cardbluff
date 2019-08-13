@@ -16,6 +16,6 @@ enum class Value (val number : Int) {
     ACE(14);
 
     companion object {
-        fun from (num : Int) = Value.values().first {it.number == num}
+        fun from (num : Int) = values().first {it.number == num}
     }
 }
