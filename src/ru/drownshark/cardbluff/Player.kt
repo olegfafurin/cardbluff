@@ -7,7 +7,10 @@ import java.io.ObjectInputStream
 import java.lang.Exception
 import java.net.Socket
 
-class Player(private var id: Int? = null, hand: MutableList<Card> = mutableListOf()) : MessageListener() {
+private val STATUS_WAITING = 0
+private val STATUS_GAME_IN_PROGRESS = 1
+
+class Player(private var id: Int? = null, hand: MutableList<Card> = mutableListOf(), status: Int = 0) : MessageListener() {
     override fun onMessage(message: Message) {
         println("${message.author}'th: " + message.text)
     }

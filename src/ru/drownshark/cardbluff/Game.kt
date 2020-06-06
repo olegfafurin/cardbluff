@@ -1,4 +1,8 @@
 package ru.drownshark.cardbluff
 
-class Game(val first : Player, val second : Player) {
+class Game(val first : Int, val second : Int) {
+    fun start() {
+
+    }
+
 }

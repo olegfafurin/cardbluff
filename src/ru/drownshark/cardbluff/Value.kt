@@ -13,5 +13,9 @@ enum class Value (val number : Int) {
     JACK(11),
     QUEEN(12),
     KING(13),
-    ACE(14)
+    ACE(14);
+
+    companion object {
+        fun from (num : Int) = Value.values().first {it.number == num}
+    }
 }

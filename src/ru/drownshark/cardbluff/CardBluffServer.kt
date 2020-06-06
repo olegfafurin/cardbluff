@@ -4,11 +4,14 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.ServerSocket
 import java.net.SocketException
+import kotlin.coroutines.jvm.*
 
 class CardBluffServer(var connect: ServerSocket) : MessageListener() {
 
     private var messages: MutableList<Message> = mutableListOf()
     private var postmans: MutableMap<Int, StreamWorker> = mutableMapOf()
+    private var games: MutableSet<Game> = mutableSetOf()
+    private var awaitingPlayers : MutableSet<Int> = mutableSetOf()
 
     private val postmansLock = Any()
 
@@ -23,7 +26,7 @@ class CardBluffServer(var connect: ServerSocket) : MessageListener() {
                         postmans[i]?.sendMessage(message)
                     } catch (e: SocketException) {
                         toRemove.add(i)
-                        println("> Player #${i} is not available anymore, removed from pool")
+                        println("> Player #$i is not available anymore, removed from pool")
                     }
                 }
             }
@@ -39,11 +42,15 @@ class CardBluffServer(var connect: ServerSocket) : MessageListener() {
     fun start() {
         while (true) {
             val client = connect.accept()
-            println(">> Player #${counter} connected")
+            println(">> Player #$counter connected")
             ObjectOutputStream(client.getOutputStream()).run { writeObject(Message("", counter)) }
             val postman = StreamWorker(client.getInputStream(), client.getOutputStream())
             postman.addListener(this)
             postman.start()
+            if (awaitingPlayers.isNotEmpty()) {
+                val newGame = Game(counter, awaitingPlayers.first())
+                GlobalScope.launch
+            }
             synchronized(postmansLock) {
                 postmans[counter++] = postman
                 for (message in messages) postman.sendMessage(message)
